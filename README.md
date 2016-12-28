@@ -1,12 +1,13 @@
 #Pyblur
 ##Python image blurring routines.
 Pyblur is a collection of simple image blurring routines.<br>
-It supports Gaussian, Disk, Box, and Linear Motion Blur Kernels.<br>
+It supports Gaussian, Disk, Box, and Linear Motion Blur Kernels as well as the Point Spread Functions
+used in [Convolutional Neural Networks for Direct Text Deblurring](http://www.fit.vutbr.cz/~ihradis/CNN-Deblur/).<br>
 Functions receive a PIL image as input, and return another as output.<br>
 Kernel sizes can either be specified as input, or randomized.<br>
 Finally, there's a RandomizedBlur function that applies a random type of blurring kernel with a random width/strength.
 
-pypi: [https://pypi.python.org/pypi?:action=display&name=pyblur&version=0.1](https://pypi.python.org/pypi?:action=display&name=pyblur&version=0.1)
+pypi: [https://pypi.python.org/pypi?:action=display&name=pyblur&version=0.2](https://pypi.python.org/pypi?:action=display&name=pyblur&version=0.2)
 
 
 
@@ -59,6 +60,20 @@ Blurs image using a Line Kernel
 Randomized kernel size, angle, and line type
 
 	blurred = LinearMotionBlur_random(img)
+
+### PSF Blur
+Blurs image using one of the Point Spread Functions (Kernels) used in:<br>
+[Convolutional Neural Networks for Direct Text Deblurring](http://www.fit.vutbr.cz/~ihradis/CNN-Deblur/)
+
+	blurred = PsfBlur(img, psfid)
+
+####Parameters
+* `psfid` Id of the Point Spread Function to apply [0, 99] <br>
+
+
+Randomized kernel size, angle, and line type
+
+	blurred = PsfBlur_random(img)
 
 
 ###Random Blur
