@@ -8,7 +8,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='pyblur',
-      version = '0.2',
+      version = '0.2.3',
       description = 'Image blurring routines',
       long_description = long_description,
       keywords = 'blur',
@@ -25,5 +25,5 @@ setup(name='pyblur',
       license='MIT',
       packages=find_packages(),
       include_package_data=True,
-      install_requires = ['numpy', 'pillow', 'scikit-image', 'scipy', 'pickle'],
+      install_requires = ['numpy', 'pillow', 'scikit-image', 'scipy'],
       zip_safe = False)

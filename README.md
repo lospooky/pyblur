@@ -7,7 +7,7 @@ Functions receive a PIL image as input, and return another as output.<br>
 Kernel sizes can either be specified as input, or randomized.<br>
 Finally, there's a RandomizedBlur function that applies a random type of blurring kernel with a random width/strength.
 
-pypi: [https://pypi.python.org/pypi?:action=display&name=pyblur&version=0.2](https://pypi.python.org/pypi?:action=display&name=pyblur&version=0.2)
+pypi: [https://pypi.python.org/pypi?:action=display&name=pyblur&version=0.2.3](https://pypi.python.org/pypi?:action=display&name=pyblur&version=0.2.3)
 
 
 
