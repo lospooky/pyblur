@@ -135,7 +135,7 @@ This project is maintained on a best-effort, irregular basis. Issues and PRs are
 
 ## Migrating from v0.2
 
-All public functions were renamed to `snake_case` in v0.3. The old `PascalCase` names (`GaussianBlur`, `BoxBlur`, etc.) were removed in v1.0.
+All public functions were renamed to `snake_case` in v1.0.0 The old `PascalCase` names (`GaussianBlur`, `BoxBlur`, etc.) were removed in v1.0.
 
 | v0.2 | v1.0+ |
 |---|---|

@@ -5,7 +5,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) — [Semantic V
 
 ---
 
-## [1.0.0] — unreleased
+## [1.0.0] — 16-03-2026
 
 Full modernization of a Python 2-era codebase. Requires Python ≥ 3.10.
 
