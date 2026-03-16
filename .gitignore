@@ -1,8 +1,44 @@
+# Spyder
 .spyderproject
+.spyproject
+
+# Media files (likely test artifacts)
 *.jpg
 *.png
+
+# Python bytecode
 *.pyc
-/*.egg-info
-/*.egg
-/dist/
-/build/
+*.pyo
+__pycache__/
+
+# Distribution / packaging
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Type checker
+.mypy_cache/
+.pyright/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editor
+.vscode/
+.idea/
+
+# Ruff
+.ruff_cache/
