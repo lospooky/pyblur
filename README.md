@@ -93,8 +93,8 @@ Simulates camera or subject motion along a straight line. Supports `L` and `RGB`
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `dim` | `int` | Kernel size — one of `3`, `5`, `7`, `9` |
-| `angle` | `float` | Motion direction in degrees; snapped to the nearest valid angle for the kernel size |
+| `dim` | `int` | Kernel size — any odd integer ≥ 3 (e.g. `3`, `5`, `7`, `9`, `11`, …) |
+| `angle` | `float` | Motion direction in degrees; any value accepted, wrapped modulo 180° |
 | `linetype` | `str` | `"full"` — symmetric; `"right"` / `"left"` — half-kernel |
 
 ```python
