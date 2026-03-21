@@ -7,7 +7,7 @@
 
 Image blurring library for Python. Provides Gaussian, defocus (disk), box, linear motion, and point-spread-function (PSF) blur kernels, plus a randomized dispatcher that picks one at random.
 
-All functions accept a `PIL.Image.Image` and return a new `PIL.Image.Image` of the same size. Every blur type exposes a deterministic variant (explicit parameters) and a random variant (parameters sampled automatically).
+All functions accept a `PIL.Image.Image` and return a new `PIL.Image.Image` of the same size. Both grayscale (`L`) and RGB images are supported. Every blur type exposes a deterministic variant (explicit parameters) and a random variant (parameters sampled automatically).
 
 PSF kernels are taken from [Convolutional Neural Networks for Direct Text Deblurring](http://www.fit.vutbr.cz/~ihradis/CNN-Deblur/).
 
@@ -29,7 +29,7 @@ pip install pyblur
 from PIL import Image
 import pyblur
 
-img = Image.open("photo.png")
+img = Image.open("photo.png")   # L or RGB
 
 # Pick a specific blur
 blurred = pyblur.gaussian_blur(img, bandwidth=1.5)
@@ -44,6 +44,8 @@ blurred = pyblur.randomized_blur(img)
 
 ### `gaussian_blur(img, bandwidth)`
 
+Supports any PIL image mode (delegates to PIL internally).
+
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `bandwidth` | `float > 0` | Standard deviation of the Gaussian kernel |
@@ -57,7 +59,7 @@ blurred = pyblur.gaussian_blur_random(img)   # bandwidth ∈ {0.5, 1.0, …, 3.5
 
 ### `defocus_blur(img, dim)`
 
-Simulates a circular (disk) aperture blur.
+Simulates a circular (disk) aperture blur. Supports `L` and `RGB` images.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -72,7 +74,7 @@ blurred = pyblur.defocus_blur_random(img)
 
 ### `box_blur(img, dim)`
 
-Uniform box (average) blur.
+Uniform box (average) blur. Supports `L` and `RGB` images.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -87,7 +89,7 @@ blurred = pyblur.box_blur_random(img)
 
 ### `linear_motion_blur(img, dim, angle, linetype)`
 
-Simulates camera or subject motion along a straight line.
+Simulates camera or subject motion along a straight line. Supports `L` and `RGB` images.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -104,7 +106,7 @@ blurred = pyblur.linear_motion_blur_random(img)
 
 ### `psf_blur(img, psfid)`
 
-Applies one of 100 real-world point-spread-function kernels captured from camera hardware.
+Applies one of 100 real-world point-spread-function kernels captured from camera hardware. Supports `L` and `RGB` images.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
