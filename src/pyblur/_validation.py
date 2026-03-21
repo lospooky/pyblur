@@ -6,6 +6,8 @@ from PIL import Image
 
 # Kernel sizes shared across box, defocus, and linear-motion blur modules.
 _KERNEL_DIMS: list[int] = [3, 5, 7, 9]
+# Supported PIL image modes for convolution-based blurs.
+_SUPPORTED_MODES: tuple[str, ...] = ("L", "RGB")
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 
@@ -34,5 +36,21 @@ def validate_dim(valid: list[int]) -> Callable[[_F], _F]:
                     f"{name}() dim must be one of {valid}, got {dim!r}"
                 )
             return func(img, dim, *args, **kwargs)
+        return wrapper  # type: ignore[return-value]
+    return decorator
+
+
+def validate_mode(supported: tuple[str, ...]) -> Callable[[_F], _F]:
+    """Decorator factory: raise ValueError if the image mode is not in *supported*."""
+    def decorator(func: _F) -> _F:
+        @functools.wraps(func)
+        def wrapper(img: Any, *args: Any, **kwargs: Any) -> Any:
+            if isinstance(img, Image.Image) and img.mode not in supported:
+                name = getattr(func, "__name__", repr(func))
+                raise ValueError(
+                    f"{name}() image mode must be one of {list(supported)}, "
+                    f"got {img.mode!r}"
+                )
+            return func(img, *args, **kwargs)
         return wrapper  # type: ignore[return-value]
     return decorator
