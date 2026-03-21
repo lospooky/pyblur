@@ -10,15 +10,12 @@ from skimage.draw import line
 from pyblur._validation import (
     _KERNEL_DIMS,
     _SUPPORTED_MODES,
-    validate_dim,
     validate_image,
     validate_mode,
+    validate_odd_dim,
 )
-from pyblur.line_dictionary import LineDictionary
 
 _LINE_TYPES: list[Literal["full", "right", "left"]] = ["full", "right", "left"]
-
-_line_dict = LineDictionary()
 
 
 def _linear_motion_blur_impl(
@@ -57,13 +54,13 @@ def linear_motion_blur_random(img: Image.Image) -> Image.Image:
     """
     line_length = _KERNEL_DIMS[np.random.randint(0, len(_KERNEL_DIMS))]
     line_type = _LINE_TYPES[np.random.randint(0, len(_LINE_TYPES))]
-    angle = _random_angle(line_length)
+    angle = _random_angle()
     return _linear_motion_blur_impl(img, line_length, angle, line_type)
 
 
 @validate_image
 @validate_mode(_SUPPORTED_MODES)
-@validate_dim(_KERNEL_DIMS)
+@validate_odd_dim
 def linear_motion_blur(
     img: Image.Image, dim: int, angle: float, linetype: Literal["full", "right", "left"]
 ) -> Image.Image:
@@ -74,10 +71,10 @@ def linear_motion_blur(
     img : PIL.Image.Image
         Grayscale (``'L'``) or RGB (``'RGB'``) input image.
     dim : int
-        Kernel size. Must be one of 3, 5, 7, 9.
+        Kernel size. Must be an odd integer >= 3.
     angle : float
-        Motion angle in degrees. Snapped to the nearest valid angle for the
-        chosen kernel size.
+        Motion direction in degrees. Any float is accepted; values outside
+        ``[0°, 180°)`` are wrapped modulo 180°.
     linetype : Literal["full", "right", "left"]
         ``'full'`` spans the entire kernel; ``'right'`` and ``'left'`` use
         only half the line.
@@ -94,39 +91,42 @@ def linear_motion_blur(
     return _linear_motion_blur_impl(img, dim, angle, linetype)
 
 
+def _line_endpoints(dim: int, angle: float) -> tuple[int, int, int, int]:
+    """Compute boundary-crossing line endpoints for a *dim*×*dim* kernel at *angle* degrees.
+
+    Angles outside ``[0°, 180°)`` are wrapped modulo 180°.  Returns
+    ``(r0, c0, r1, c1)`` clamped to ``[0, dim-1]``.
+    """
+    c = dim // 2
+    rad = math.radians(math.fmod(angle, 180.0))
+    dr = -math.sin(rad)  # row delta (row 0 is top, so sin is negated)
+    dc = math.cos(rad)   # col delta
+    t_row = c / abs(dr) if abs(dr) > 1e-9 else float("inf")
+    t_col = c / abs(dc) if abs(dc) > 1e-9 else float("inf")
+    t = min(t_row, t_col)
+    edge = dim - 1
+    r0 = max(0, min(edge, int(round(c - t * dr))))
+    c0 = max(0, min(edge, int(round(c - t * dc))))
+    r1 = max(0, min(edge, int(round(c + t * dr))))
+    c1 = max(0, min(edge, int(round(c + t * dc))))
+    return r0, c0, r1, c1
+
+
 def _line_kernel(
     dim: int, angle: float, linetype: Literal["full", "right", "left"]
 ) -> NDArray[np.float32]:
     kernel_center = dim // 2
-    angle = _sanitize_angle(kernel_center, angle)
+    r0, c0, r1, c1 = _line_endpoints(dim, angle)
+    if linetype == "right":
+        r0, c0 = kernel_center, kernel_center
+    elif linetype == "left":
+        r1, c1 = kernel_center, kernel_center
+    rr, cc = line(r0, c0, r1, c1)
     kernel = np.zeros((dim, dim), dtype=np.float32)
-    anchors = list(_line_dict.lines[dim][angle])  # copy — never mutate shared dict data
-    if linetype == 'right':
-        anchors[0] = kernel_center
-        anchors[1] = kernel_center
-    if linetype == 'left':
-        anchors[2] = kernel_center
-        anchors[3] = kernel_center
-    rr, cc = line(anchors[0], anchors[1], anchors[2], anchors[3])
     kernel[rr, cc] = 1
     kernel /= np.count_nonzero(kernel)
     return kernel
 
 
-def _sanitize_angle(kernel_center: int, angle: float) -> float:
-    num_lines = kernel_center * 4
-    angle = math.fmod(angle, 180.0)
-    valid_angles = np.linspace(0, 180, num_lines, endpoint=False)
-    return float(_nearest_value(angle, valid_angles))
-
-
-def _nearest_value(theta: float, valid_angles: NDArray[np.float64]) -> np.float64:
-    idx = (np.abs(valid_angles - theta)).argmin()
-    return valid_angles[idx]
-
-
-def _random_angle(kerneldim: int) -> int:
-    kernel_center = kerneldim // 2
-    num_lines = kernel_center * 4
-    valid_angles = np.linspace(0, 180, num_lines, endpoint=False)
-    return int(valid_angles[np.random.randint(0, len(valid_angles))])
+def _random_angle() -> float:
+    return float(np.random.uniform(0, 180))

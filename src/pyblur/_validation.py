@@ -41,6 +41,7 @@ def validate_dim(valid: list[int]) -> Callable[[_F], _F]:
 
 
 def validate_mode(supported: tuple[str, ...]) -> Callable[[_F], _F]:
+
     """Decorator factory: raise ValueError if the image mode is not in *supported*."""
     def decorator(func: _F) -> _F:
         @functools.wraps(func)
@@ -54,3 +55,16 @@ def validate_mode(supported: tuple[str, ...]) -> Callable[[_F], _F]:
             return func(img, *args, **kwargs)
         return wrapper  # type: ignore[return-value]
     return decorator
+
+
+def validate_odd_dim(func: _F) -> _F:
+    """Decorator: raise ValueError if the second argument is not an odd integer >= 3."""
+    @functools.wraps(func)
+    def wrapper(img: Any, dim: Any, *args: Any, **kwargs: Any) -> Any:
+        if not isinstance(dim, int) or dim < 3 or dim % 2 == 0:
+            name = getattr(func, "__name__", repr(func))
+            raise ValueError(
+                f"{name}() dim must be an odd integer >= 3, got {dim!r}"
+            )
+        return func(img, dim, *args, **kwargs)
+    return wrapper  # type: ignore[return-value]
