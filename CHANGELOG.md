@@ -5,6 +5,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) — [Semantic V
 
 ---
 
+## [Unreleased]
+
+### Changed
+- `linear_motion_blur`: `dim` now accepts **any odd integer ≥ 3** (previously restricted to `3`, `5`, `7`, `9`).
+- `linear_motion_blur`: `angle` is now accepted as-is — any `float`, wrapped modulo 180°. Discrete angle snapping to a kernel-size-dependent set of valid angles has been removed.
+- Replaced the hardcoded `LineDictionary` lookup table with a dynamic geometric computation using trigonometry (`_line_endpoints`). Behaviour is identical for the previously supported dims and canonical angles.
+
+---
+
 ## [1.1.0] — 21-03-2026
 
 ### Added
@@ -41,5 +50,6 @@ Full modernization of a Python 2-era codebase. Requires Python ≥ 3.10.
 
 Initial public release. Python 2.7 only.
 
+[1.1.0]: https://github.com/lospooky/pyblur/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/lospooky/pyblur/compare/v0.2.3...v1.0.0
 [0.2.3]: https://github.com/lospooky/pyblur/releases/tag/v0.2.3
