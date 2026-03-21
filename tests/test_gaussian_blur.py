@@ -28,6 +28,7 @@ class TestGaussianBlur:
         out = pyblur.gaussian_blur(rgb_img, 1.0)
         assert isinstance(out, Image.Image)
         assert_same_size(out, rgb_img)
+        assert out.mode == "RGB"
 
     def test_invalid_img_type(self) -> None:
         with pytest.raises(TypeError, match="gaussian_blur\\(\\)"):
@@ -56,3 +57,9 @@ class TestGaussianBlurRandom:
     def test_invalid_img_type(self) -> None:
         with pytest.raises(TypeError, match="gaussian_blur_random\\(\\)"):
             pyblur.gaussian_blur_random("oops")  # type: ignore[arg-type]
+
+    def test_rgb_image(self, rgb_img: Image.Image) -> None:
+        out = pyblur.gaussian_blur_random(rgb_img)
+        assert isinstance(out, Image.Image)
+        assert out.mode == "RGB"
+        assert_same_size(out, rgb_img)

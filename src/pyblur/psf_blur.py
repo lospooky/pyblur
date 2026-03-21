@@ -5,7 +5,7 @@ from numpy.lib.npyio import NpzFile
 from PIL import Image
 from scipy.signal import convolve2d
 
-from pyblur._validation import validate_image
+from pyblur._validation import _SUPPORTED_MODES, validate_image, validate_mode
 
 _PSF_COUNT = 100
 _psf_data: NpzFile | None = None
@@ -22,18 +22,26 @@ def _load_psf() -> NpzFile:
 def _psf_blur_impl(img: Image.Image, psfid: int) -> Image.Image:
     kernel = _load_psf()[str(psfid)]
     imgarray = np.array(img, dtype="float32")
-    convolved = convolve2d(imgarray, kernel, mode='same', fillvalue=255.0).astype("uint8")
+    if imgarray.ndim == 3:
+        convolved = np.stack(
+            [convolve2d(imgarray[..., c], kernel, mode='same', fillvalue=255.0).astype("uint8")
+             for c in range(imgarray.shape[2])],
+            axis=2,
+        )
+    else:
+        convolved = convolve2d(imgarray, kernel, mode='same', fillvalue=255.0).astype("uint8")
     return Image.fromarray(convolved)
 
 
 @validate_image
+@validate_mode(_SUPPORTED_MODES)
 def psf_blur(img: Image.Image, psfid: int) -> Image.Image:
     """Apply a point-spread-function blur to an image.
 
     Parameters
     ----------
     img : PIL.Image.Image
-        Grayscale input image.
+        Grayscale (``'L'``) or RGB (``'RGB'``) input image.
     psfid : int
         Index of the PSF kernel. Must be an integer in ``[0, 99]``.
 
@@ -50,13 +58,14 @@ def psf_blur(img: Image.Image, psfid: int) -> Image.Image:
 
 
 @validate_image
+@validate_mode(_SUPPORTED_MODES)
 def psf_blur_random(img: Image.Image) -> Image.Image:
     """Apply a point-spread-function blur with a randomly chosen kernel.
 
     Parameters
     ----------
     img : PIL.Image.Image
-        Grayscale input image.
+        Grayscale (``'L'``) or RGB (``'RGB'``) input image.
 
     Returns
     -------

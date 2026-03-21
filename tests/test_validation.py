@@ -3,7 +3,7 @@
 import pytest
 from PIL import Image
 
-from pyblur._validation import _KERNEL_DIMS, validate_dim, validate_image
+from pyblur._validation import _KERNEL_DIMS, validate_dim, validate_image, validate_mode
 
 
 class TestValidateImage:
@@ -106,6 +106,57 @@ class TestValidateDim:
         assert fn(img, 8) == 8
         with pytest.raises(ValueError):
             fn(img, 3)
+
+
+class TestValidateMode:
+    def test_passes_supported_modes(self) -> None:
+        @validate_image
+        @validate_mode(("L", "RGB"))
+        def fn(img: Image.Image) -> str:
+            return img.mode
+
+        for mode in ("L", "RGB"):
+            img = Image.new(mode, (8, 8))
+            assert fn(img) == mode
+
+    @pytest.mark.parametrize("bad_mode", ["RGBA", "P"])
+    def test_rejects_unsupported_modes(self, bad_mode: str) -> None:
+        @validate_image
+        @validate_mode(("L", "RGB"))
+        def fn(img: Image.Image) -> str:
+            return img.mode
+
+        img = Image.new(bad_mode, (8, 8))
+        with pytest.raises(ValueError, match="image mode"):
+            fn(img)
+
+    def test_error_names_function(self) -> None:
+        @validate_image
+        @validate_mode(("L",))
+        def my_special_blur(img: Image.Image) -> Image.Image:
+            return img
+
+        img = Image.new("RGB", (8, 8))
+        with pytest.raises(ValueError, match="my_special_blur\\(\\)"):
+            my_special_blur(img)
+
+    def test_non_image_raises_type_error_not_value_error(self) -> None:
+        """validate_image fires first, so non-images get TypeError not ValueError."""
+        @validate_image
+        @validate_mode(("L",))
+        def fn(img):
+            return img
+
+        with pytest.raises(TypeError):
+            fn("not an image")
+
+    def test_preserves_function_name(self) -> None:
+        @validate_image
+        @validate_mode(("L", "RGB"))
+        def my_func(img):
+            return img
+
+        assert my_func.__name__ == "my_func"
 
 
 class TestKernelDims:

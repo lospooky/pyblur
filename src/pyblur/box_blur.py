@@ -3,24 +3,38 @@ from numpy.typing import NDArray
 from PIL import Image
 from scipy.signal import convolve2d
 
-from pyblur._validation import _KERNEL_DIMS, validate_dim, validate_image
+from pyblur._validation import (
+    _KERNEL_DIMS,
+    _SUPPORTED_MODES,
+    validate_dim,
+    validate_image,
+    validate_mode,
+)
 
 
 def _box_blur_impl(img: Image.Image, dim: int) -> Image.Image:
     imgarray = np.array(img, dtype="float32")
     kernel = _box_kernel(dim)
-    convolved = convolve2d(imgarray, kernel, mode='same', fillvalue=255.0).astype("uint8")
+    if imgarray.ndim == 3:
+        convolved = np.stack(
+            [convolve2d(imgarray[..., c], kernel, mode='same', fillvalue=255.0).astype("uint8")
+             for c in range(imgarray.shape[2])],
+            axis=2,
+        )
+    else:
+        convolved = convolve2d(imgarray, kernel, mode='same', fillvalue=255.0).astype("uint8")
     return Image.fromarray(convolved)
 
 
 @validate_image
+@validate_mode(_SUPPORTED_MODES)
 def box_blur_random(img: Image.Image) -> Image.Image:
     """Apply a box blur with a randomly chosen kernel size.
 
     Parameters
     ----------
     img : PIL.Image.Image
-        Grayscale input image.
+        Grayscale (``'L'``) or RGB (``'RGB'``) input image.
 
     Returns
     -------
@@ -32,6 +46,7 @@ def box_blur_random(img: Image.Image) -> Image.Image:
 
 
 @validate_image
+@validate_mode(_SUPPORTED_MODES)
 @validate_dim(_KERNEL_DIMS)
 def box_blur(img: Image.Image, dim: int) -> Image.Image:
     """Apply a box (mean) blur to an image.
@@ -39,7 +54,7 @@ def box_blur(img: Image.Image, dim: int) -> Image.Image:
     Parameters
     ----------
     img : PIL.Image.Image
-        Grayscale input image.
+        Grayscale (``'L'``) or RGB (``'RGB'``) input image.
     dim : int
         Kernel size. Must be one of 3, 5, 7, 9.
 

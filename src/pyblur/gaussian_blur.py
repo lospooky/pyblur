@@ -17,7 +17,8 @@ def gaussian_blur_random(img: Image.Image) -> Image.Image:
     Parameters
     ----------
     img : PIL.Image.Image
-        Input image (any mode).
+        Input image. Grayscale (``'L'``) and RGB (``'RGB'``) are well-tested;
+        PIL handles this natively for other modes too.
 
     Returns
     -------
@@ -35,7 +36,8 @@ def gaussian_blur(img: Image.Image, bandwidth: float) -> Image.Image:
     Parameters
     ----------
     img : PIL.Image.Image
-        Input image (any mode).
+        Input image. Grayscale (``'L'``) and RGB (``'RGB'``) are well-tested;
+        PIL handles this natively for other modes too.
     bandwidth : float
         Standard deviation of the Gaussian kernel. Must be positive.
 

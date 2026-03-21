@@ -91,3 +91,46 @@ class TestLinearMotionBlurRandom:
     def test_invalid_img_type(self) -> None:
         with pytest.raises(TypeError, match="linear_motion_blur_random\\(\\)"):
             pyblur.linear_motion_blur_random(123)  # type: ignore[arg-type]
+
+
+class TestLinearMotionBlurRGBSupport:
+    @pytest.mark.parametrize("dim", _KERNEL_DIMS)
+    @pytest.mark.parametrize("linetype", _LINE_TYPES)
+    def test_returns_pil_image(self, rgb_img: Image.Image, dim: int, linetype: str) -> None:
+        out = pyblur.linear_motion_blur(rgb_img, dim, 45.0, linetype)  # type: ignore[arg-type]
+        assert isinstance(out, Image.Image)
+
+    @pytest.mark.parametrize("dim", _KERNEL_DIMS)
+    def test_preserves_size(self, rgb_img: Image.Image, dim: int) -> None:
+        out = pyblur.linear_motion_blur(rgb_img, dim, 45.0, "full")  # type: ignore[arg-type]
+        assert_same_size(out, rgb_img)
+
+    @pytest.mark.parametrize("dim", _KERNEL_DIMS)
+    def test_preserves_mode(self, rgb_img: Image.Image, dim: int) -> None:
+        out = pyblur.linear_motion_blur(rgb_img, dim, 45.0, "full")  # type: ignore[arg-type]
+        assert out.mode == "RGB"
+
+    @pytest.mark.parametrize("dim", _KERNEL_DIMS)
+    def test_preserves_channels(self, rgb_img: Image.Image, dim: int) -> None:
+        out = pyblur.linear_motion_blur(rgb_img, dim, 45.0, "full")  # type: ignore[arg-type]
+        assert np.array(out).shape[2] == 3
+
+    def test_random_returns_pil_image(self, rgb_img: Image.Image) -> None:
+        out = pyblur.linear_motion_blur_random(rgb_img)
+        assert isinstance(out, Image.Image)
+
+    def test_random_preserves_mode(self, rgb_img: Image.Image) -> None:
+        out = pyblur.linear_motion_blur_random(rgb_img)
+        assert out.mode == "RGB"
+
+    @pytest.mark.parametrize("mode", ["RGBA", "P"])
+    def test_rejects_unsupported_mode(self, mode: str) -> None:
+        img = Image.new(mode, (16, 16))
+        with pytest.raises(ValueError, match="image mode"):
+            pyblur.linear_motion_blur(img, 5, 0.0, "full")
+
+    @pytest.mark.parametrize("mode", ["RGBA", "P"])
+    def test_random_rejects_unsupported_mode(self, mode: str) -> None:
+        img = Image.new(mode, (16, 16))
+        with pytest.raises(ValueError, match="image mode"):
+            pyblur.linear_motion_blur_random(img)

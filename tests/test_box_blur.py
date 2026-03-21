@@ -76,3 +76,45 @@ class TestBoxBlurRandom:
     def test_invalid_img_type(self) -> None:
         with pytest.raises(TypeError, match="box_blur_random\\(\\)"):
             pyblur.box_blur_random(42)  # type: ignore[arg-type]
+
+
+class TestBoxBlurRGBSupport:
+    @pytest.mark.parametrize("dim", _KERNEL_DIMS)
+    def test_returns_pil_image(self, rgb_img: Image.Image, dim: int) -> None:
+        out = pyblur.box_blur(rgb_img, dim)
+        assert isinstance(out, Image.Image)
+
+    @pytest.mark.parametrize("dim", _KERNEL_DIMS)
+    def test_preserves_size(self, rgb_img: Image.Image, dim: int) -> None:
+        out = pyblur.box_blur(rgb_img, dim)
+        assert_same_size(out, rgb_img)
+
+    @pytest.mark.parametrize("dim", _KERNEL_DIMS)
+    def test_preserves_mode(self, rgb_img: Image.Image, dim: int) -> None:
+        out = pyblur.box_blur(rgb_img, dim)
+        assert out.mode == "RGB"
+
+    @pytest.mark.parametrize("dim", _KERNEL_DIMS)
+    def test_preserves_channels(self, rgb_img: Image.Image, dim: int) -> None:
+        out = pyblur.box_blur(rgb_img, dim)
+        assert np.array(out).shape[2] == 3
+
+    def test_random_returns_pil_image(self, rgb_img: Image.Image) -> None:
+        out = pyblur.box_blur_random(rgb_img)
+        assert isinstance(out, Image.Image)
+
+    def test_random_preserves_mode(self, rgb_img: Image.Image) -> None:
+        out = pyblur.box_blur_random(rgb_img)
+        assert out.mode == "RGB"
+
+    @pytest.mark.parametrize("mode", ["RGBA", "P"])
+    def test_rejects_unsupported_mode(self, mode: str) -> None:
+        img = Image.new(mode, (16, 16))
+        with pytest.raises(ValueError, match="image mode"):
+            pyblur.box_blur(img, 5)
+
+    @pytest.mark.parametrize("mode", ["RGBA", "P"])
+    def test_random_rejects_unsupported_mode(self, mode: str) -> None:
+        img = Image.new(mode, (16, 16))
+        with pytest.raises(ValueError, match="image mode"):
+            pyblur.box_blur_random(img)
