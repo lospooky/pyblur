@@ -3,7 +3,13 @@
 import pytest
 from PIL import Image
 
-from pyblur._validation import _KERNEL_DIMS, validate_dim, validate_image, validate_mode
+from pyblur._validation import (
+    _KERNEL_DIMS,
+    validate_dim,
+    validate_image,
+    validate_mode,
+    validate_odd_dim,
+)
 
 
 class TestValidateImage:
@@ -165,3 +171,52 @@ class TestKernelDims:
 
     def test_kernel_dims_all_odd(self) -> None:
         assert all(d % 2 == 1 for d in _KERNEL_DIMS)
+
+
+class TestValidateOddDim:
+    def test_passes_valid_dims(self) -> None:
+        @validate_image
+        @validate_odd_dim
+        def fn(img: Image.Image, dim: int) -> int:
+            return dim
+
+        img = Image.new("L", (10, 10))
+        for d in [3, 5, 7, 9, 11, 13]:
+            assert fn(img, d) == d
+
+    @pytest.mark.parametrize("bad", [0, 1, 2, 4, -1, -3, 3.0, "3", None])
+    def test_rejects_invalid_dims(self, bad) -> None:
+        @validate_image
+        @validate_odd_dim
+        def fn(img: Image.Image, dim):
+            return dim
+
+        img = Image.new("L", (10, 10))
+        with pytest.raises(ValueError, match="fn\\(\\)"):
+            fn(img, bad)
+
+    def test_error_names_function(self) -> None:
+        @validate_image
+        @validate_odd_dim
+        def my_motion_blur(img: Image.Image, dim: int) -> Image.Image:
+            return img
+
+        img = Image.new("L", (4, 4))
+        with pytest.raises(ValueError, match="my_motion_blur\\(\\)"):
+            my_motion_blur(img, 4)
+
+    def test_preserves_function_name(self) -> None:
+        @validate_odd_dim
+        def my_blur(img, dim):
+            return img
+
+        assert my_blur.__name__ == "my_blur"
+
+    def test_passes_extra_args(self) -> None:
+        @validate_image
+        @validate_odd_dim
+        def fn(img: Image.Image, dim: int, angle: float = 0.0) -> float:
+            return angle
+
+        img = Image.new("L", (4, 4))
+        assert fn(img, 5, 45.0) == 45.0
