@@ -1,6 +1,6 @@
 # pyblur
 
-[![CI](https://github.com/lospooky/pyblur/actions/workflows/ci.yml/badge.svg)](https://github.com/lospooky/pyblur/actions/workflows/ci.yml)
+[![CI](https://github.com/lospooky/pyblur/actions/workflows/pull_request.yml/badge.svg)](https://github.com/lospooky/pyblur/actions/workflows/pull_request.yml)
 [![PyPI version](https://img.shields.io/pypi/v/pyblur)](https://pypi.org/project/pyblur/)
 [![Python versions](https://img.shields.io/pypi/pyversions/pyblur)](https://pypi.org/project/pyblur/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)

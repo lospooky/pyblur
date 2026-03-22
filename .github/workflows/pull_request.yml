@@ -1,0 +1,101 @@
+name: Pull Request
+run-name: "PR #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}"
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  lint:
+    name: Lint & type-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Lint (ruff)
+        run: uv run ruff check src/ tests/
+
+      - name: Type-check (ty)
+        run: uv run ty check
+
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Run tests
+        run: uv run pytest --cov-report=xml --tb=short -q 2>&1 | tee pytest-output.txt; exit ${PIPESTATUS[0]}
+
+      - name: Write job summary
+        if: always()
+        run: |
+          python - <<'EOF'
+          import re, pathlib
+
+          raw = pathlib.Path("pytest-output.txt").read_text()
+
+          # last summary line: "435 passed, 2 warnings in 4.56s"
+          summary_match = re.search(r"([\d]+ passed.*)", raw)
+          summary = summary_match.group(1) if summary_match else "see log"
+
+          # coverage total: "TOTAL  ... 100%"
+          cov_match = re.search(r"^TOTAL\s+\d+\s+\d+\s+\d+\s+\d+\s+(\d+%)", raw, re.MULTILINE)
+          coverage = cov_match.group(1) if cov_match else "n/a"
+
+          failed = re.findall(r"^FAILED (.+)$", raw, re.MULTILINE)
+
+          lines = [
+              f"## Test results — Python ${{ matrix.python-version }}",
+              f"",
+              f"| | |",
+              f"|---|---|",
+              f"| Result | {summary} |",
+              f"| Coverage | {coverage} |",
+          ]
+          if failed:
+              lines += ["", "### Failed tests", ""]
+              lines += [f"- `{f}`" for f in failed]
+
+          pathlib.Path("$GITHUB_STEP_SUMMARY").write_text("\n".join(lines) + "\n")
+          EOF
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v5
+        if: matrix.python-version == '3.12'
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+

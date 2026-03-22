@@ -1,0 +1,56 @@
+name: Publish
+run-name: "Publish ${{ inputs.tag }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to publish (e.g. v1.2.3 — must already exist in the repo)"
+        required: true
+        type: string
+
+jobs:
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write   # required for OIDC trusted publishing
+
+    steps:
+      - name: Validate tag exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${{ github.repository }}/git/refs/tags/${{ inputs.tag }}" \
+            || { echo "Tag '${{ inputs.tag }}' does not exist in the repo."; exit 1; }
+
+      - uses: actions/checkout@v6
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          fetch-depth: 0
+
+      - name: Verify tag is on master
+        run: |
+          TAG_SHA=$(git rev-list -n 1 "refs/tags/${{ inputs.tag }}")
+          git fetch origin master
+          if ! git merge-base --is-ancestor "$TAG_SHA" origin/master; then
+            echo "Tag '${{ inputs.tag }}' (commit $TAG_SHA) is not on master."
+            exit 1
+          fi
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Build package
+        run: uv build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
