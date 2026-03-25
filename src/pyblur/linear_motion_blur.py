@@ -2,8 +2,8 @@ from typing import Literal
 
 import numpy as np
 from PIL import Image
-from scipy.signal import convolve2d
 
+from pyblur._backends import Backend, get_backend
 from pyblur._kernels import line_kernel
 from pyblur._validation import (
     _KERNEL_DIMS,
@@ -21,23 +21,16 @@ def _linear_motion_blur_impl(
     dim: int,
     angle: float,
     linetype: Literal["full", "right", "left"],
+    backend: Backend,
 ) -> Image.Image:
-    imgarray = np.array(img, dtype="float32")
-    kernel = line_kernel(dim, angle, linetype)
-    if imgarray.ndim == 3:
-        convolved = np.stack(
-            [convolve2d(imgarray[..., c], kernel, mode='same', fillvalue=255.0).astype("uint8")
-             for c in range(imgarray.shape[2])],
-            axis=2,
-        )
-    else:
-        convolved = convolve2d(imgarray, kernel, mode='same', fillvalue=255.0).astype("uint8")
-    return Image.fromarray(convolved)
+    return backend.apply_kernel(img, line_kernel(dim, angle, linetype))
 
 
 @validate_image
 @validate_mode(_SUPPORTED_MODES)
-def linear_motion_blur_random(img: Image.Image) -> Image.Image:
+def linear_motion_blur_random(
+    img: Image.Image, *, backend: str | Backend | None = None
+) -> Image.Image:
     """Apply a linear motion blur with randomly chosen parameters.
 
     Parameters
@@ -53,14 +46,19 @@ def linear_motion_blur_random(img: Image.Image) -> Image.Image:
     line_length = _KERNEL_DIMS[np.random.randint(0, len(_KERNEL_DIMS))]
     line_type = _LINE_TYPES[np.random.randint(0, len(_LINE_TYPES))]
     angle = _random_angle()
-    return _linear_motion_blur_impl(img, line_length, angle, line_type)
+    return _linear_motion_blur_impl(img, line_length, angle, line_type, get_backend(backend))
 
 
 @validate_image
 @validate_mode(_SUPPORTED_MODES)
 @validate_odd_dim
 def linear_motion_blur(
-    img: Image.Image, dim: int, angle: float, linetype: Literal["full", "right", "left"]
+    img: Image.Image,
+    dim: int,
+    angle: float,
+    linetype: Literal["full", "right", "left"],
+    *,
+    backend: str | Backend | None = None,
 ) -> Image.Image:
     """Apply a linear motion blur to an image.
 
@@ -86,7 +84,7 @@ def linear_motion_blur(
         raise ValueError(
             f"linear_motion_blur() linetype must be one of {_LINE_TYPES}, got {linetype!r}"
         )
-    return _linear_motion_blur_impl(img, dim, angle, linetype)
+    return _linear_motion_blur_impl(img, dim, angle, linetype, get_backend(backend))
 
 
 
