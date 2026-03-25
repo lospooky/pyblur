@@ -1,7 +1,7 @@
 import numpy as np
 from PIL import Image
-from scipy.signal import convolve2d
 
+from pyblur._backends import Backend, get_backend
 from pyblur._kernels import box_kernel
 from pyblur._validation import (
     _KERNEL_DIMS,
@@ -12,23 +12,13 @@ from pyblur._validation import (
 )
 
 
-def _box_blur_impl(img: Image.Image, dim: int) -> Image.Image:
-    imgarray = np.array(img, dtype="float32")
-    kernel = box_kernel(dim)
-    if imgarray.ndim == 3:
-        convolved = np.stack(
-            [convolve2d(imgarray[..., c], kernel, mode='same', fillvalue=255.0).astype("uint8")
-             for c in range(imgarray.shape[2])],
-            axis=2,
-        )
-    else:
-        convolved = convolve2d(imgarray, kernel, mode='same', fillvalue=255.0).astype("uint8")
-    return Image.fromarray(convolved)
+def _box_blur_impl(img: Image.Image, dim: int, backend: Backend) -> Image.Image:
+    return backend.apply_kernel(img, box_kernel(dim))
 
 
 @validate_image
 @validate_mode(_SUPPORTED_MODES)
-def box_blur_random(img: Image.Image) -> Image.Image:
+def box_blur_random(img: Image.Image, *, backend: str | Backend | None = None) -> Image.Image:
     """Apply a box blur with a randomly chosen kernel size.
 
     Parameters
@@ -42,13 +32,13 @@ def box_blur_random(img: Image.Image) -> Image.Image:
         Blurred image with the same dimensions as the input.
     """
     kerneldim = _KERNEL_DIMS[np.random.randint(0, len(_KERNEL_DIMS))]
-    return _box_blur_impl(img, kerneldim)
+    return _box_blur_impl(img, kerneldim, get_backend(backend))
 
 
 @validate_image
 @validate_mode(_SUPPORTED_MODES)
 @validate_dim(_KERNEL_DIMS)
-def box_blur(img: Image.Image, dim: int) -> Image.Image:
+def box_blur(img: Image.Image, dim: int, *, backend: str | Backend | None = None) -> Image.Image:
     """Apply a box (mean) blur to an image.
 
     Parameters
@@ -63,7 +53,7 @@ def box_blur(img: Image.Image, dim: int) -> Image.Image:
     PIL.Image.Image
         Blurred image with the same dimensions as the input.
     """
-    return _box_blur_impl(img, dim)
+    return _box_blur_impl(img, dim, get_backend(backend))
 
 
 

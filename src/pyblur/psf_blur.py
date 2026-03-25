@@ -1,30 +1,20 @@
 import numpy as np
 from PIL import Image
-from scipy.signal import convolve2d
 
+from pyblur._backends import Backend, get_backend
 from pyblur._kernels import psf_kernel
 from pyblur._validation import _SUPPORTED_MODES, validate_image, validate_mode
 
 _PSF_COUNT = 100
 
 
-def _psf_blur_impl(img: Image.Image, psfid: int) -> Image.Image:
-    kernel = psf_kernel(psfid)
-    imgarray = np.array(img, dtype="float32")
-    if imgarray.ndim == 3:
-        convolved = np.stack(
-            [convolve2d(imgarray[..., c], kernel, mode='same', fillvalue=255.0).astype("uint8")
-             for c in range(imgarray.shape[2])],
-            axis=2,
-        )
-    else:
-        convolved = convolve2d(imgarray, kernel, mode='same', fillvalue=255.0).astype("uint8")
-    return Image.fromarray(convolved)
+def _psf_blur_impl(img: Image.Image, psfid: int, backend: Backend) -> Image.Image:
+    return backend.apply_kernel(img, psf_kernel(psfid))
 
 
 @validate_image
 @validate_mode(_SUPPORTED_MODES)
-def psf_blur(img: Image.Image, psfid: int) -> Image.Image:
+def psf_blur(img: Image.Image, psfid: int, *, backend: str | Backend | None = None) -> Image.Image:
     """Apply a point-spread-function blur to an image.
 
     Parameters
@@ -43,12 +33,12 @@ def psf_blur(img: Image.Image, psfid: int) -> Image.Image:
         raise ValueError(
             f"psf_blur() psfid must be an integer in [0, {_PSF_COUNT - 1}], got {psfid!r}"
         )
-    return _psf_blur_impl(img, psfid)
+    return _psf_blur_impl(img, psfid, get_backend(backend))
 
 
 @validate_image
 @validate_mode(_SUPPORTED_MODES)
-def psf_blur_random(img: Image.Image) -> Image.Image:
+def psf_blur_random(img: Image.Image, *, backend: str | Backend | None = None) -> Image.Image:
     """Apply a point-spread-function blur with a randomly chosen kernel.
 
     Parameters
@@ -62,5 +52,5 @@ def psf_blur_random(img: Image.Image) -> Image.Image:
         Blurred image with the same dimensions as the input.
     """
     psfid = np.random.randint(0, _PSF_COUNT)
-    return _psf_blur_impl(img, psfid)
+    return _psf_blur_impl(img, psfid, get_backend(backend))
 
