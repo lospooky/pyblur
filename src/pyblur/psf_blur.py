@@ -1,26 +1,15 @@
-import os.path
-
 import numpy as np
-from numpy.lib.npyio import NpzFile
 from PIL import Image
 from scipy.signal import convolve2d
 
+from pyblur._kernels import psf_kernel
 from pyblur._validation import _SUPPORTED_MODES, validate_image, validate_mode
 
 _PSF_COUNT = 100
-_psf_data: NpzFile | None = None
-
-
-def _load_psf() -> NpzFile:
-    global _psf_data
-    if _psf_data is None:
-        npz_path = os.path.join(os.path.dirname(__file__), "psf.npz")
-        _psf_data = np.load(npz_path, allow_pickle=False)
-    return _psf_data
 
 
 def _psf_blur_impl(img: Image.Image, psfid: int) -> Image.Image:
-    kernel = _load_psf()[str(psfid)]
+    kernel = psf_kernel(psfid)
     imgarray = np.array(img, dtype="float32")
     if imgarray.ndim == 3:
         convolved = np.stack(
@@ -72,7 +61,6 @@ def psf_blur_random(img: Image.Image) -> Image.Image:
     PIL.Image.Image
         Blurred image with the same dimensions as the input.
     """
-    psf = _load_psf()
-    psfid = np.random.randint(0, len(psf))
+    psfid = np.random.randint(0, _PSF_COUNT)
     return _psf_blur_impl(img, psfid)
 
