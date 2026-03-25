@@ -5,24 +5,24 @@ from conftest import assert_same_size
 from PIL import Image
 
 import pyblur
+from pyblur._kernels import disk_kernel
 from pyblur._validation import _KERNEL_DIMS
-from pyblur.defocus_blur import _disk_kernel
 
 
 class TestDiskKernel:
     @pytest.mark.parametrize("dim", _KERNEL_DIMS)
     def test_shape(self, dim: int) -> None:
-        k = _disk_kernel(dim)
+        k = disk_kernel(dim)
         assert k.shape == (dim, dim)
 
     @pytest.mark.parametrize("dim", _KERNEL_DIMS)
     def test_sums_to_one(self, dim: int) -> None:
-        k = _disk_kernel(dim)
+        k = disk_kernel(dim)
         assert pytest.approx(k.sum(), abs=1e-6) == 1.0
 
     @pytest.mark.parametrize("dim", _KERNEL_DIMS)
     def test_non_negative(self, dim: int) -> None:
-        k = _disk_kernel(dim)
+        k = disk_kernel(dim)
         assert (k >= 0).all()
 
 

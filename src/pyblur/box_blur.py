@@ -1,8 +1,8 @@
 import numpy as np
-from numpy.typing import NDArray
 from PIL import Image
 from scipy.signal import convolve2d
 
+from pyblur._kernels import box_kernel
 from pyblur._validation import (
     _KERNEL_DIMS,
     _SUPPORTED_MODES,
@@ -14,7 +14,7 @@ from pyblur._validation import (
 
 def _box_blur_impl(img: Image.Image, dim: int) -> Image.Image:
     imgarray = np.array(img, dtype="float32")
-    kernel = _box_kernel(dim)
+    kernel = box_kernel(dim)
     if imgarray.ndim == 3:
         convolved = np.stack(
             [convolve2d(imgarray[..., c], kernel, mode='same', fillvalue=255.0).astype("uint8")
@@ -66,7 +66,4 @@ def box_blur(img: Image.Image, dim: int) -> Image.Image:
     return _box_blur_impl(img, dim)
 
 
-def _box_kernel(dim: int) -> NDArray[np.float32]:
-    kernel = np.ones((dim, dim), dtype=np.float32)
-    kernel /= np.count_nonzero(kernel)
-    return kernel
+

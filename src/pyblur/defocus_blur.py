@@ -1,9 +1,8 @@
 import numpy as np
-from numpy.typing import NDArray
 from PIL import Image
 from scipy.signal import convolve2d
-from skimage.draw import disk
 
+from pyblur._kernels import disk_kernel
 from pyblur._validation import (
     _KERNEL_DIMS,
     _SUPPORTED_MODES,
@@ -15,7 +14,7 @@ from pyblur._validation import (
 
 def _defocus_blur_impl(img: Image.Image, dim: int) -> Image.Image:
     imgarray = np.array(img, dtype="float32")
-    kernel = _disk_kernel(dim)
+    kernel = disk_kernel(dim)
     if imgarray.ndim == 3:
         convolved = np.stack(
             [convolve2d(imgarray[..., c], kernel, mode='same', fillvalue=255.0).astype("uint8")
@@ -67,20 +66,4 @@ def defocus_blur(img: Image.Image, dim: int) -> Image.Image:
     return _defocus_blur_impl(img, dim)
 
 
-def _disk_kernel(dim: int) -> NDArray[np.float32]:
-    kernel = np.zeros((dim, dim), dtype=np.float32)
-    center = dim // 2
-    rr, cc = disk((center, center), center + 1, shape=kernel.shape)
-    kernel[rr, cc] = 1
-    if dim == 3 or dim == 5:
-        kernel = _adjust(kernel, dim)
-    kernel /= np.count_nonzero(kernel)
-    return kernel
 
-
-def _adjust(kernel: NDArray[np.float32], kernelwidth: int) -> NDArray[np.float32]:
-    kernel[0, 0] = 0
-    kernel[0, kernelwidth - 1] = 0
-    kernel[kernelwidth - 1, 0] = 0
-    kernel[kernelwidth - 1, kernelwidth - 1] = 0
-    return kernel

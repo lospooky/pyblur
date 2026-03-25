@@ -5,24 +5,24 @@ from conftest import assert_same_size
 from PIL import Image
 
 import pyblur
+from pyblur._kernels import box_kernel
 from pyblur._validation import _KERNEL_DIMS
-from pyblur.box_blur import _box_kernel
 
 
 class TestBoxKernel:
     @pytest.mark.parametrize("dim", _KERNEL_DIMS)
     def test_shape(self, dim: int) -> None:
-        k = _box_kernel(dim)
+        k = box_kernel(dim)
         assert k.shape == (dim, dim)
 
     @pytest.mark.parametrize("dim", _KERNEL_DIMS)
     def test_sums_to_one(self, dim: int) -> None:
-        k = _box_kernel(dim)
+        k = box_kernel(dim)
         assert pytest.approx(k.sum(), abs=1e-6) == 1.0
 
     @pytest.mark.parametrize("dim", _KERNEL_DIMS)
     def test_uniform(self, dim: int) -> None:
-        k = _box_kernel(dim)
+        k = box_kernel(dim)
         expected = 1.0 / (dim * dim)
         assert np.allclose(k, expected)
 
