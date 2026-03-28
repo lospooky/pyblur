@@ -5,6 +5,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) — [Semantic V
 
 ---
 
+## [1.3.0] — 28-03-2026
+
+### Added
+- All public blur functions (`box_blur`, `defocus_blur`, `gaussian_blur`, `linear_motion_blur`, `psf_blur`, and their `_random` / `randomized_blur` variants) now accept a `backend=` keyword argument. Accepts `"scipy"`, `"numpy"`, `"opencv"`, or a custom `Backend` protocol instance.
+- Pure-numpy backend (`"numpy"`): always available, no optional dependencies. Automatically becomes the default when scipy is not installed.
+- OpenCV backend (`"opencv"`): opt-in via `backend="opencv"`; requires `pip install pyblur[opencv]`.
+
+### Changed
+- `scipy` and `scikit-image` are no longer required dependencies. The core package (`numpy`, `pillow`) now works standalone. Install `pyblur[scipy]` to restore the scipy-backed default explicitly.
+- Default backend remains `"scipy"` when scipy is installed — no behaviour change for existing users.
+
+---
+
 ## [1.2.0] — 22-03-2026
 
 ### Changed
@@ -50,6 +63,7 @@ Full modernization of a Python 2-era codebase. Requires Python ≥ 3.10.
 
 Initial public release. Python 2.7 only.
 
+[1.3.0]: https://github.com/lospooky/pyblur/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/lospooky/pyblur/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/lospooky/pyblur/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/lospooky/pyblur/compare/v0.2.3...v1.0.0

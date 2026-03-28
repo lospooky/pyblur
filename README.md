@@ -19,7 +19,14 @@ PSF kernels are taken from [Convolutional Neural Networks for Direct Text Deblur
 pip install pyblur
 ```
 
-**Requirements:** Python ≥ 3.10, numpy, pillow, scikit-image, scipy.
+**Requirements:** Python ≥ 3.10, numpy, pillow.
+
+Optional backends ship as extras:
+
+```bash
+pip install pyblur[scipy]    # scipy + scikit-image (default backend when installed)
+pip install pyblur[opencv]   # opencv-python
+```
 
 ---
 
@@ -36,6 +43,33 @@ blurred = pyblur.gaussian_blur(img, bandwidth=1.5)
 
 # Or let pyblur choose everything at random
 blurred = pyblur.randomized_blur(img)
+
+# Explicitly choose a backend
+blurred = pyblur.box_blur(img, dim=5, backend="opencv")
+```
+
+---
+
+## Backends
+
+Every public function accepts an optional `backend=` keyword argument that controls which convolution engine is used.
+
+| Backend | Extra | Notes |
+|---------|-------|-------|
+| `"scipy"` | `pyblur[scipy]` | Default when scipy is installed. Identical output to v1.2 and earlier. |
+| `"numpy"` | _(none)_ | Always available. Default when scipy is not installed. |
+| `"opencv"` | `pyblur[opencv]` | Opt-in only; never set as the automatic default. |
+
+The default is selected automatically at import time: `"scipy"` if scipy is importable, `"numpy"` otherwise. Passing a backend name overrides this for that call only.
+
+```python
+# Override per-call
+blurred = pyblur.defocus_blur(img, dim=7, backend="numpy")
+blurred = pyblur.linear_motion_blur(img, dim=5, angle=30.0, linetype="full", backend="opencv")
+
+# Or pass a Backend instance directly
+from pyblur._backends._numpy import PilNumpyBackend
+blurred = pyblur.gaussian_blur(img, bandwidth=2.0, backend=PilNumpyBackend())
 ```
 
 ---
