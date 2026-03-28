@@ -35,6 +35,10 @@ classifiers = [
 scipy = [
     "scikit-image>=0.20",
     "scipy>=1.7",
+]
+opencv = [
+    "opencv-python>=4.5",
+]
 
 [project.urls]
 Homepage = "https://github.com/lospooky/pyblur"
@@ -78,6 +82,7 @@ select = ["E", "F", "W", "I"]
 
 [dependency-groups]
 dev = [
+    "opencv-python>=4.5",
     "scikit-image>=0.20",
     "scipy>=1.7",
     "ty",
