@@ -10,8 +10,6 @@ from typing import Literal
 import numpy as np
 from numpy.lib.npyio import NpzFile
 from numpy.typing import NDArray
-from skimage.draw import disk as skimage_disk
-from skimage.draw import line as skimage_line
 
 # ---------------------------------------------------------------------------
 # PSF data (loaded lazily from the bundled psf.npz)
@@ -53,8 +51,9 @@ def disk_kernel(dim: int) -> NDArray[np.float32]:
     """Return a normalised *dim*×*dim* circular disk (defocus) kernel."""
     kernel = np.zeros((dim, dim), dtype=np.float32)
     center = dim // 2
-    rr, cc = skimage_disk((center, center), center + 1, shape=kernel.shape)
-    kernel[rr, cc] = 1
+    y, x = np.ogrid[:dim, :dim]
+    mask = (y - center) ** 2 + (x - center) ** 2 < (center + 1) ** 2
+    kernel[mask] = 1
     if dim == 3 or dim == 5:
         kernel = _disk_adjust(kernel, dim)
     kernel /= np.count_nonzero(kernel)
@@ -82,6 +81,30 @@ def line_endpoints(dim: int, angle: float) -> tuple[int, int, int, int]:
     return r0, c0, r1, c1
 
 
+def _bresenham_line(
+    r0: int, c0: int, r1: int, c1: int
+) -> tuple[NDArray[np.intp], NDArray[np.intp]]:
+    """Return row/col index arrays for a Bresenham line from (r0,c0) to (r1,c1)."""
+    dr = abs(r1 - r0)
+    dc = abs(c1 - c0)
+    sr = 1 if r0 < r1 else -1
+    sc = 1 if c0 < c1 else -1
+    err = dr - dc
+    rows: list[int] = [r0]
+    cols: list[int] = [c0]
+    while r0 != r1 or c0 != c1:
+        e2 = 2 * err
+        if e2 > -dc:
+            err -= dc
+            r0 += sr
+        if e2 < dr:
+            err += dr
+            c0 += sc
+        rows.append(r0)
+        cols.append(c0)
+    return np.array(rows, dtype=np.intp), np.array(cols, dtype=np.intp)
+
+
 def line_kernel(
     dim: int, angle: float, linetype: Literal["full", "right", "left"]
 ) -> NDArray[np.float32]:
@@ -92,7 +115,7 @@ def line_kernel(
         r0, c0 = kernel_center, kernel_center
     elif linetype == "left":
         r1, c1 = kernel_center, kernel_center
-    rr, cc = skimage_line(r0, c0, r1, c1)
+    rr, cc = _bresenham_line(r0, c0, r1, c1)
     kernel = np.zeros((dim, dim), dtype=np.float32)
     kernel[rr, cc] = 1
     kernel /= np.count_nonzero(kernel)
