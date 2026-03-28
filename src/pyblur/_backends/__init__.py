@@ -92,8 +92,36 @@ def get_backend(backend: "str | Backend | None" = None) -> Backend:
 # ---------------------------------------------------------------------------
 # Register built-in backends and set the default at import time.
 # ---------------------------------------------------------------------------
-from pyblur._backends._pil_scipy import PilScipyBackend as _PilScipyBackend  # noqa: E402
 
-_scipy_backend = _PilScipyBackend()
-register(_scipy_backend)
-set_default("scipy")
+
+def _init_backends() -> None:
+    """Register built-in backends; called once at module import.
+
+    * ``"numpy"`` is always registered and set as baseline default.
+    * ``"scipy"`` is registered and becomes the default when scipy is importable
+      (identical behaviour to v1.2).  Falls back to ``"numpy"`` otherwise.
+    * ``"opencv"`` is registered when opencv-python is importable; it is never
+      made the automatic default (must be opted-in via ``backend="opencv"``).
+    """
+    from pyblur._backends._numpy import PilNumpyBackend as _PilNumpyBackend
+
+    register(_PilNumpyBackend())
+    set_default("numpy")  # baseline; upgraded to scipy below if available
+
+    try:
+        from pyblur._backends._pil_scipy import PilScipyBackend as _PilScipyBackend
+
+        register(_PilScipyBackend())
+        set_default("scipy")
+    except ImportError:
+        pass  # scipy unavailable; numpy remains the default
+
+    try:
+        from pyblur._backends._opencv import PilOpenCVBackend as _PilOpenCVBackend
+
+        register(_PilOpenCVBackend())
+    except ImportError:
+        pass  # opencv unavailable; no-op
+
+
+_init_backends()

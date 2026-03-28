@@ -15,8 +15,6 @@ requires-python = ">=3.10"
 dependencies = [
     "numpy>=1.21",
     "pillow>=9.0",
-    "scikit-image>=0.20",
-    "scipy>=1.7",
 ]
 
 classifiers = [
@@ -32,6 +30,11 @@ classifiers = [
     "Topic :: Multimedia :: Graphics",
     "Topic :: Scientific/Engineering :: Image Processing",
 ]
+
+[project.optional-dependencies]
+scipy = [
+    "scikit-image>=0.20",
+    "scipy>=1.7",
 
 [project.urls]
 Homepage = "https://github.com/lospooky/pyblur"
@@ -75,6 +78,8 @@ select = ["E", "F", "W", "I"]
 
 [dependency-groups]
 dev = [
+    "scikit-image>=0.20",
+    "scipy>=1.7",
     "ty",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
