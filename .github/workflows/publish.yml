@@ -25,7 +25,7 @@ jobs:
           gh api "repos/${{ github.repository }}/git/refs/tags/${{ inputs.tag }}" \
             || { echo "Tag '${{ inputs.tag }}' does not exist in the repo."; exit 1; }
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: refs/tags/${{ inputs.tag }}
           fetch-depth: 0
